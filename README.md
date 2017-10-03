@@ -18,7 +18,7 @@ Original functionality is all from:
 
 ### Example nginx.conf (dynamic loading from file channels.txt)
 
-rtmp {
+    rtmp {
         server {
                 listen 1935;
                 chunk_size 8192;
@@ -33,6 +33,6 @@ rtmp {
 
 ### Example channels.txt
 
-rtmp://mirror1.mtbo.org/stream/streamid1
-rtmp://mirror2.mtbo.org/stream/streamid1
-rtmp://a.rtmp.youtube.com/live2/zg1y-hwh8-0fut-xxxx
+    rtmp://mirror1.mtbo.org/stream/streamid1
+    rtmp://mirror2.mtbo.org/stream/streamid1
+    rtmp://a.rtmp.youtube.com/live2/zg1y-hwh8-0fut-xxxx
