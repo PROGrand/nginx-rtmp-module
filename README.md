@@ -1,4 +1,4 @@
-# NGINX-based Media Streaming Server: Dynamic PUSH support
+# NGINX-based Media Streaming Server: Dynamic PUSH support (EXPERIMENTAL)
 ## nginx-rtmp-module
 
 Original functionality is all from:
@@ -14,7 +14,7 @@ Original functionality is all from:
 ### Additional Features
 
 * Stream relay support for distributed
-  streaming extended for push models: list of targets is dynamically loaded from local file on PUBLISH request. No server config reloading is required. Local file can be modified with any third-party system, uploaded through HTTP and etc.
+  streaming extended for push models: list of targets is dynamically loaded from local file on PUBLISH request. No server config reloading is required. No existing connections dropping. Local file can be modified with any third-party system, uploaded through HTTP and etc.
 
 ### Example nginx.conf (dynamic loading from file channels.txt)
 
