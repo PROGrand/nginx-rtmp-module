@@ -16,7 +16,7 @@ Original functionality is all from:
 * Stream relay support for distributed
   streaming extended for push models: list of targets is dynamically loaded from local file on PUBLISH request. No server config reloading is required. No existing connections dropping. Local file can be modified with any third-party system, uploaded through HTTP and etc.
 
-### Example nginx.conf (dynamic loading from file channels.txt)
+### Example nginx.conf (dynamic loading from channels.txt file)
 
     rtmp {
         server {
@@ -24,9 +24,9 @@ Original functionality is all from:
                 chunk_size 8192;
 
                 application stream {
-                        live on;
-                        meta copy;
-            						push channels.txt;
+                    live on;
+                    meta copy;
+                    push channels.txt;
                 }
         }
     }
