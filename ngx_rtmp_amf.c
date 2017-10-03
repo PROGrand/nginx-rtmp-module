@@ -331,7 +331,10 @@ ngx_rtmp_amf_read(ngx_rtmp_amf_ctx_t *ctx, ngx_rtmp_amf_elt_t *elts,
                     if (elts->type & NGX_RTMP_AMF_OPTIONAL) {
                         return NGX_OK;
                     }
-                case NGX_ERROR:
+
+		__attribute__ ((fallthrough));
+                
+		case NGX_ERROR:
                     return NGX_ERROR;
             }
             type = type8;

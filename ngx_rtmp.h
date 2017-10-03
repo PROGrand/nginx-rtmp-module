@@ -8,6 +8,11 @@
 #define _NGX_RTMP_H_INCLUDED_
 
 
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
@@ -19,8 +24,8 @@
 
 
 #if (NGX_WIN32)
-typedef __int8              int8_t;
-typedef unsigned __int8     uint8_t;
+//typedef __int8              int8_t;
+//typedef unsigned __int8     uint8_t;
 #endif
 
 
@@ -183,8 +188,8 @@ typedef struct {
 /* disable zero-sized array warning by msvc */
 
 #if (NGX_WIN32)
-#pragma warning(push)
-#pragma warning(disable:4200)
+//#pragma warning(push)
+//#pragma warning(disable:4200)
 #endif
 
 
@@ -272,7 +277,7 @@ typedef struct {
 
 
 #if (NGX_WIN32)
-#pragma warning(pop)
+//#pragma warning(pop)
 #endif
 
 

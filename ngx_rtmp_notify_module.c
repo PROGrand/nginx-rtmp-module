@@ -1071,6 +1071,9 @@ ngx_rtmp_notify_publish_handle(ngx_rtmp_session_t *s,
         return NGX_ERROR;
     }
 
+    ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+	    "PUSH: push 1.");
+
     ngx_rtmp_relay_push(s, &local_name, &target);
 
 next:

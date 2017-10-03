@@ -10,6 +10,8 @@
 #include "ngx_rtmp_cmd_module.h"
 
 
+#define DYNAMIC_PUSH 1
+
 static ngx_rtmp_publish_pt          next_publish;
 static ngx_rtmp_play_pt             next_play;
 static ngx_rtmp_delete_stream_pt    next_delete_stream;
@@ -169,6 +171,7 @@ ngx_rtmp_relay_create_app_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+
     if (ngx_array_init(&racf->pulls, cf->pool, 1, sizeof(void *)) != NGX_OK) {
         return NULL;
     }
@@ -237,6 +240,9 @@ ngx_rtmp_relay_static_pull_reconnect(ngx_event_t *ev)
         return;
     }
 
+    ngx_log_error(NGX_LOG_INFO, racf->log, 0,
+	    "PUSH: set timer 6.");
+
     ngx_add_timer(ev, racf->pull_reconnect);
 }
 
@@ -248,8 +254,8 @@ ngx_rtmp_relay_push_reconnect(ngx_event_t *ev)
 
     ngx_rtmp_relay_app_conf_t      *racf;
     ngx_rtmp_relay_ctx_t           *ctx, *pctx;
-    ngx_uint_t                      n;
-    ngx_rtmp_relay_target_t        *target, **t;
+    ngx_uint_t                      n, m;
+    ngx_rtmp_relay_target_t        *target, **t, **dynamic_t, *dynamic_target;
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
             "relay: push reconnect");
@@ -268,34 +274,110 @@ ngx_rtmp_relay_push_reconnect(ngx_event_t *ev)
         if (target->name.len && (ctx->name.len != target->name.len ||
             ngx_memcmp(ctx->name.data, target->name.data, ctx->name.len)))
         {
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"PUSH: SKIP 1.");
             continue;
         }
 
-        for (pctx = ctx->play; pctx; pctx = pctx->next) {
-            if (pctx->tag == &ngx_rtmp_relay_module &&
-                pctx->data == target)
-            {
-                break;
-            }
-        }
+	if (!DYNAMIC_PUSH)
+	{
+		for (pctx = ctx->play; pctx; pctx = pctx->next) {
+			if (pctx->tag == &ngx_rtmp_relay_module &&
+				pctx->data == target)
+			{
+				break;
+			}
+		}
 
-        if (pctx) {
-            continue;
-        }
+		if (pctx) {
 
-        if (ngx_rtmp_relay_push(s, &ctx->name, target) == NGX_OK) {
-            continue;
-        }
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"PUSH: SKIP 2, push reconnect name='%V' app='%V' "
+				"playpath='%V' url='%V'",
+				&ctx->name, &target->app, &target->play_path,
+				&target->url.url);
+			continue;
+		}
 
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                "relay: push reconnect failed name='%V' app='%V' "
-                "playpath='%V' url='%V'",
-                &ctx->name, &target->app, &target->play_path,
-                &target->url.url);
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"PUSH: 1, push reconnect name='%V' app='%V' "
+			"playpath='%V' url='%V'",
+			&ctx->name, &target->app, &target->play_path,
+			&target->url.url);
 
-        if (!ctx->push_evt.timer_set) {
-            ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
-        }
+		if (ngx_rtmp_relay_push(s, &ctx->name, target) == NGX_OK) {
+
+			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+				"PUSH: OK, push reconnect name='%V' app='%V' "
+				"playpath='%V' url='%V'",
+				&ctx->name, &target->app, &target->play_path,
+				&target->url.url);
+
+			continue;
+		}
+
+		ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+			"relay: push reconnect failed name='%V' app='%V' "
+			"playpath='%V' url='%V'",
+			&ctx->name, &target->app, &target->play_path,
+			&target->url.url);
+
+		if (!ctx->push_evt.timer_set) {
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"PUSH: set timer.");
+			ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
+		}
+	}
+	else
+	{
+		dynamic_t = target->dynamic_targets->elts;
+
+		for (m = 0; m < target->dynamic_targets->nelts; ++m, ++dynamic_t)
+		{
+			dynamic_target = *dynamic_t;
+
+			for (pctx = ctx->play; pctx; pctx = pctx->next) {
+				if (pctx->tag == &ngx_rtmp_relay_module &&
+					pctx->data == dynamic_target)
+				{
+					break;
+				}
+			}
+
+			if (pctx) {
+
+				ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+					"DYNAMIC: PUSH, SKIP2, push reconnect name='%V' app='%V' "
+					"playpath='%V' url='%V'",
+					&ctx->name, &dynamic_target->app, &dynamic_target->play_path,
+					&dynamic_target->url.url);
+				continue;
+			}
+
+			if (ngx_rtmp_relay_push(s, &ctx->name, dynamic_target) == NGX_OK) {
+
+				ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+					"DYNAMIC: PUSH, reconnect OK name='%V' app='%V' "
+					"playpath='%V' url='%V'",
+					&ctx->name, &dynamic_target->app, &dynamic_target->play_path,
+					&dynamic_target->url.url);
+
+				continue;
+			}
+
+			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+				"DYNAMIC: PUSH, reconnect FAILED name='%V' app='%V' "
+				"playpath='%V' url='%V'",
+				&ctx->name, &dynamic_target->app, &dynamic_target->play_path,
+				&dynamic_target->url.url);
+
+			if (!ctx->push_evt.timer_set) {
+				ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+					"DYNAMIC: PUSH, set timer.");
+				ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
+			}
+		}
+	}
     }
 }
 
@@ -602,6 +684,10 @@ ngx_rtmp_relay_create(ngx_rtmp_session_t *s, ngx_str_t *name,
         play_ctx->publish = (*cctx)->publish;
         play_ctx->next = (*cctx)->play;
         (*cctx)->play = play_ctx;
+
+	ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+		"relay: create push 10.");
+
         return NGX_OK;
     }
 
@@ -615,6 +701,9 @@ ngx_rtmp_relay_create(ngx_rtmp_session_t *s, ngx_str_t *name,
     publish_ctx->play = play_ctx;
     play_ctx->publish = publish_ctx;
     *cctx = publish_ctx;
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "relay: create push 11.");
 
     return NGX_OK;
 }
@@ -681,22 +770,217 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         if (target->name.len && (name.len != target->name.len ||
             ngx_memcmp(name.data, target->name.data, name.len)))
         {
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"OK target: SKIP.");
             continue;
         }
 
-        if (ngx_rtmp_relay_push(s, &name, target) == NGX_OK) {
-            continue;
-        }
 
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                "relay: push failed name='%V' app='%V' "
-                "playpath='%V' url='%V'",
-                &name, &target->app, &target->play_path,
-                &target->url.url);
+	if (!DYNAMIC_PUSH)
+	{
+		if (ngx_rtmp_relay_push(s, &name, target) == NGX_OK) {
 
-        if (!ctx->push_evt.timer_set) {
-            ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
-        }
+			if (1)
+			{
+				ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+					"OK target: url='%V'\n"
+					"app='%V'\n"
+					"name='%V'\n"
+					"tc_url='%V'\n"
+					"page_url='%V'\n"
+					"swf_url='%V'\n"
+					"flash_ver='%V'\n"
+					"play_path='%V'\n"
+					"live='%i'\n"
+					"start='%i'\n"
+					"stop='%i'\n",
+					&target->url.url,
+					&target->app,
+					&target->name,
+					&target->tc_url,
+					&target->page_url,
+					&target->swf_url,
+					&target->flash_ver,
+					&target->play_path,
+					target->live,
+					target->start,
+					target->stop
+				);
+			}
+			continue;
+		}
+
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"OK target: SKIP 2.");
+
+		ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+			"relay: push failed name='%V' app='%V' "
+			"playpath='%V' url='%V'",
+			&name, &target->app, &target->play_path,
+			&target->url.url);
+
+		if (!ctx->push_evt.timer_set) {
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"PUSH: set timer 2.");
+			ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
+		}
+	}
+	else
+	{
+		FILE* f;
+		ngx_rtmp_relay_target_t            *t1;
+		ngx_url_t                          *u;
+		size_t len;
+		u_char buffer[MAX_PATH * 2];
+		ngx_str_t url_s;
+
+		if (target->dynamic_targets)
+		{
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"TARGET: DESTROY");
+			ngx_array_destroy(target->dynamic_targets);
+			target->dynamic_targets = 0;
+		}
+
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"TARGET: ALLOC");
+
+		target->dynamic_targets = ngx_array_create(s->connection->pool, 1, sizeof(void *));
+
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"target: file='%V'", &target->url.url);
+
+		f = fopen((char*)target->url.url.data, "r");
+
+		if (!f)
+		{
+			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+				"t1: '%V' read error.", &target->url.url);
+
+			continue;
+		}
+
+
+		while (fgets((char*)buffer, sizeof(buffer), f))
+		{
+			u_char* pbuffer = ngx_pcalloc(s->connection->pool, sizeof(buffer));
+
+			len = strlen((const char*)buffer);
+
+			ngx_memcpy(pbuffer, buffer, len + 1);
+
+			while (len && ((pbuffer[len - 1] == '\n') || (pbuffer[len - 1] == '\r')))
+			{
+				pbuffer[len - 1] = '\0';
+				len--;
+			}
+
+			if (0 >= len)
+				continue;
+
+
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"t1: [%V] read: [%s].", &target->url.url, pbuffer);
+
+
+
+			t1 = ngx_pcalloc(s->connection->pool, sizeof(*t1));
+			t1->tag = target->tag;
+			t1->data = t1;
+
+
+			u = &t1->url;
+			u->default_port = 1935;
+			u->uri_part = 1;
+
+			u->url.len = len;
+			u->url.data = pbuffer;
+
+			if (ngx_strncasecmp(u->url.data, (u_char *) "rtmp://", 7) == 0) {
+				u->url.data += 7;
+				u->url.len -= 7;
+			}
+
+			if (ngx_parse_url(s->connection->pool, u) != NGX_OK) {
+				if (u->err) {
+					ngx_log_error(NGX_LOG_EMERG, s->connection->log, 0,
+						"%s in url \"%V\"", u->err, &u->url);
+				}
+			}
+
+#define NGX_RTMP_RELAY_STR_PAR(name, var)                                     \
+			t1->var = target->var;                                        \
+
+#define NGX_RTMP_RELAY_NUM_PAR(name, var)                                     \
+			t1->var = target->var;                            \
+
+			NGX_RTMP_RELAY_STR_PAR("app", app);
+			NGX_RTMP_RELAY_STR_PAR("name", name);
+			NGX_RTMP_RELAY_STR_PAR("tcUrl", tc_url);
+			NGX_RTMP_RELAY_STR_PAR("pageUrl", page_url);
+			NGX_RTMP_RELAY_STR_PAR("swfUrl", swf_url);
+			NGX_RTMP_RELAY_STR_PAR("flashVer", flash_ver);
+			NGX_RTMP_RELAY_STR_PAR("playPath", play_path);
+			NGX_RTMP_RELAY_NUM_PAR("live", live);
+			NGX_RTMP_RELAY_NUM_PAR("start", start);
+			NGX_RTMP_RELAY_NUM_PAR("stop", stop);
+
+#undef NGX_RTMP_RELAY_STR_PAR
+#undef NGX_RTMP_RELAY_NUM_PAR
+
+			t = ngx_array_push(target->dynamic_targets);
+			*t = t1;
+
+			if (ngx_rtmp_relay_push(s, &name, t1) == NGX_OK) {
+
+				if (1)
+				{
+					ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+						"t1: url='%V'\n"
+						"app='%V'\n"
+						"name='%V'\n"
+						"tc_url='%V'\n"
+						"page_url='%V'\n"
+						"swf_url='%V'\n"
+						"flash_ver='%V'\n"
+						"play_path='%V'\n"
+						"live='%i'\n"
+						"start='%i'\n"
+						"stop='%i'\n",
+						&t1->url.url,
+						&t1->app,
+						&t1->name,
+						&t1->tc_url,
+						&t1->page_url,
+						&t1->swf_url,
+						&t1->flash_ver,
+						&t1->play_path,
+						t1->live,
+						t1->start,
+						t1->stop
+					);
+				}
+				continue;
+			}
+
+			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+				"relay: push failed name='%V' app='%V' "
+				"playpath='%V' url='%V'",
+				&name, &t1->app, &t1->play_path,
+				&t1->url.url);
+
+			if (!ctx->push_evt.timer_set) {
+
+				ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+					"PUSH: set timer 2.");
+				ngx_add_timer(&ctx->push_evt, racf->push_reconnect);
+			}
+		}
+
+		fclose(f);
+	}
+
+
     }
 
 next:
@@ -1334,6 +1618,8 @@ ngx_rtmp_relay_close(ngx_rtmp_session_t *s)
     }
 
     if (s->static_relay) {
+	    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+		    "PUSH: set timer 4.");
         ngx_add_timer(ctx->static_evt, racf->pull_reconnect);
     }
 
@@ -1358,6 +1644,9 @@ ngx_rtmp_relay_close(ngx_rtmp_session_t *s)
         if (s->relay && ctx->tag == &ngx_rtmp_relay_module &&
             !ctx->publish->push_evt.timer_set)
         {
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"PUSH: set timer 5.");
+
             ngx_add_timer(&ctx->publish->push_evt, racf->push_reconnect);
         }
 
@@ -1472,12 +1761,15 @@ ngx_rtmp_relay_push_pull(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         u->url.len  -= 7;
     }
 
-    if (ngx_parse_url(cf->pool, u) != NGX_OK) {
-        if (u->err) {
-            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "%s in url \"%V\"", u->err, &u->url);
-        }
-        return NGX_CONF_ERROR;
+    if (!DYNAMIC_PUSH)
+    {
+	    if (ngx_parse_url(cf->pool, u) != NGX_OK) {
+	        if (u->err) {
+	            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+	                    "%s in url \"%V\"", u->err, &u->url);
+	        }
+	        return NGX_CONF_ERROR;
+	    }
     }
 
     value += 2;
@@ -1581,7 +1873,7 @@ ngx_rtmp_relay_push_pull(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         t = ngx_array_push(&racf->pulls);
 
     } else {
-        t = ngx_array_push(&racf->pushes);
+	    t = ngx_array_push(&racf->pushes);
     }
 
     if (t == NULL) {

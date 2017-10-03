@@ -79,7 +79,7 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
 
         case AF_UNIX:
             unix_socket = 1;
-
+__attribute__ ((fallthrough));
         default: /* AF_INET */
             sin = (struct sockaddr_in *) sa;
 

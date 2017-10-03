@@ -29,6 +29,7 @@ typedef struct {
     void                           *tag;     /* usually module reference */
     void                           *data;    /* module-specific data */
     ngx_uint_t                      counter; /* mutable connection counter */
+    ngx_array_t*                 dynamic_targets;
 } ngx_rtmp_relay_target_t;
 
 
