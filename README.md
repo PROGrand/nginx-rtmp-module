@@ -29,7 +29,7 @@ Original functionality is all from:
             						push channels.txt;
                 }
         }
-}
+    }
 
 ### Example channels.txt
 
