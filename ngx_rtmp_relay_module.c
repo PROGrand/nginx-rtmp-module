@@ -758,14 +758,24 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "TEST: 1.");
+
     if (s->auto_pushed) {
         goto next;
     }
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "TEST: 2.");
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_relay_module);
     if (ctx && s->relay) {
         goto next;
     }
+
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "TEST: 3.");
 
     racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_relay_module);
     if (racf == NULL || racf->pushes.nelts == 0) {
@@ -774,6 +784,9 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
     name.len = ngx_strlen(v->name);
     name.data = v->name;
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "TEST: 4.");
 
     t = racf->pushes.elts;
     for (n = 0; n < racf->pushes.nelts; ++n, ++t) {
@@ -1012,6 +1025,10 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
 
 next:
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+	    "TEST: 5.");
+
     return next_publish(s, v);
 }
 
