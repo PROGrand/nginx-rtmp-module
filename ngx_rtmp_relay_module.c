@@ -854,7 +854,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
 			"TEST: 1.");
 
-		if (target->dynamic_targets)
+		if (target && target->dynamic_targets)
 		{
 			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
 				"TARGET: DESTROY");
