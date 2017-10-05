@@ -847,7 +847,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		size_t len;
 
 #ifndef MAX_PATH
-#define MAX_PATH 8192
+#define MAX_PATH 512
 #endif //MAX_PATH.
 
 		u_char buffer[MAX_PATH * 10];
