@@ -777,6 +777,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     name.data = v->name;
 
     t = racf->pushes.elts;
+
     for (n = 0; n < racf->pushes.nelts; ++n, ++t) {
         target = *t;
 
@@ -849,15 +850,12 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 #define MAX_PATH 8192
 #endif //MAX_PATH.
 
-		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TEST: 1.");
-
 		u_char buffer[MAX_PATH * 10];
 		char file_path[MAX_PATH * 2];
 		ngx_str_t url_s;
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TEST: 2.");
+			"TEST: 1.");
 
 		if (target->dynamic_targets)
 		{
@@ -1791,6 +1789,7 @@ ngx_rtmp_relay_push_pull(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     target->tag = &ngx_rtmp_relay_module;
     target->data = target;
+    target->dynamic_targets = 0;
 
     u = &target->url;
     u->default_port = 1935;
