@@ -864,10 +864,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		}
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TEST: 2.");
-
-		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TARGET: ALLOC '%V'", name);
+			"TARGET: ALLOC '%V'", &name);
 
 		target->dynamic_targets = ngx_array_create(s->connection->pool, 1, sizeof(void *));
 
@@ -877,7 +874,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		if (!is_alnum((char*)name.data))
 		{
 			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-				"alphanum name error: '%V'", name);
+				"alphanum name error: '%V'", &name);
 			continue;
 		}
 
