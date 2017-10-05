@@ -846,12 +846,9 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		ngx_url_t                          *u;
 		size_t len;
 
-#ifndef MAX_PATH
-#define MAX_PATH 512
-#endif //MAX_PATH.
+		u_char* buffer = ngx_pcalloc(s->connection->pool, 10000);
+		char file_path = ngx_pcalloc(s->connection->pool, 10000);
 
-		u_char buffer[MAX_PATH * 10];
-		char file_path[MAX_PATH * 2];
 		ngx_str_t url_s;
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
@@ -896,9 +893,9 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		}
 
 
-		while (fgets((char*)buffer, sizeof(buffer), f))
+		while (fgets((char*)buffer, 10000, f))
 		{
-			u_char* pbuffer = ngx_pcalloc(s->connection->pool, sizeof(buffer));
+			u_char* pbuffer = ngx_pcalloc(s->connection->pool, 10000);
 
 			len = strlen((const char*)buffer);
 
