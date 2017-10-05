@@ -737,6 +737,18 @@ ngx_rtmp_relay_push(ngx_rtmp_session_t *s, ngx_str_t *name,
 }
 
 
+int is_alnum(const char* s)
+{
+	for (size_t n = 0, len = strlen(s); n < len; n++)
+	{
+		if (!isalnum(s[n]))
+			return 0;
+	}
+
+	return 1;
+}
+
+
 static ngx_int_t
 ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
@@ -831,7 +843,8 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		ngx_rtmp_relay_target_t            *t1;
 		ngx_url_t                          *u;
 		size_t len;
-		u_char buffer[MAX_PATH * 2];
+		u_char buffer[MAX_PATH * 10];
+		char file_path[MAX_PATH * 2];
 		ngx_str_t url_s;
 
 		if (target->dynamic_targets)
@@ -843,14 +856,25 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		}
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TARGET: ALLOC");
+			"TARGET: ALLOC '%V'", name);
 
 		target->dynamic_targets = ngx_array_create(s->connection->pool, 1, sizeof(void *));
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
 			"target: file='%V'", &target->url.url);
 
-		f = fopen((char*)target->url.url.data, "r");
+		if (!is_alnum((char*)name.data))
+		{
+			ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+				"alphanum name error: '%V'", name);
+			continue;
+		}
+
+		strcpy(file_path, (char*)target->url.url.data);
+		strcat(file_path, "/");
+		strcat(file_path, (char*)name.data);
+
+		f = fopen(file_path, "r");
 
 		if (!f)
 		{

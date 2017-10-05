@@ -7,8 +7,10 @@
 #ifndef _NGX_RTMP_H_INCLUDED_
 #define _NGX_RTMP_H_INCLUDED_
 
-
+#if __GNUC__ >= 7
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"

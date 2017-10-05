@@ -331,9 +331,10 @@ ngx_rtmp_amf_read(ngx_rtmp_amf_ctx_t *ctx, ngx_rtmp_amf_elt_t *elts,
                     if (elts->type & NGX_RTMP_AMF_OPTIONAL) {
                         return NGX_OK;
                     }
-
+#if __GNUC__ >= 7
 		__attribute__ ((fallthrough));
-                
+#endif
+
 		case NGX_ERROR:
                     return NGX_ERROR;
             }
