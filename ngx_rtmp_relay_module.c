@@ -843,6 +843,10 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		ngx_rtmp_relay_target_t            *t1;
 		ngx_url_t                          *u;
 		size_t len;
+#ifndef MAX_PATH
+#define MAX_PATH 8192
+#endif //MAX_PATH.
+
 		u_char buffer[MAX_PATH * 10];
 		char file_path[MAX_PATH * 2];
 		ngx_str_t url_s;
