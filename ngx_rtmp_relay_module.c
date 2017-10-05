@@ -847,7 +847,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		size_t len;
 
 		u_char* buffer = ngx_pcalloc(s->connection->pool, 10000);
-		char file_path = ngx_pcalloc(s->connection->pool, 10000);
+		char* file_path = ngx_pcalloc(s->connection->pool, 10000);
 
 		ngx_str_t url_s;
 
