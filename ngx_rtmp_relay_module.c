@@ -758,24 +758,15 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-	    "TEST: 1.");
-
     if (s->auto_pushed) {
         goto next;
     }
-
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-	    "TEST: 2.");
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_relay_module);
     if (ctx && s->relay) {
         goto next;
     }
 
-
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-	    "TEST: 3.");
 
     racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_relay_module);
     if (racf == NULL || racf->pushes.nelts == 0) {
@@ -785,12 +776,12 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     name.len = ngx_strlen(v->name);
     name.data = v->name;
 
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-	    "TEST: 4.");
-
     t = racf->pushes.elts;
     for (n = 0; n < racf->pushes.nelts; ++n, ++t) {
         target = *t;
+
+	ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+		"TEST: 1.");
 
         if (target->name.len && (name.len != target->name.len ||
             ngx_memcmp(name.data, target->name.data, name.len)))
@@ -800,6 +791,9 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
             continue;
         }
 
+
+	ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+		"TEST: 2.");
 
 	if (!DYNAMIC_PUSH)
 	{
@@ -856,9 +850,13 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 		ngx_rtmp_relay_target_t            *t1;
 		ngx_url_t                          *u;
 		size_t len;
+
 #ifndef MAX_PATH
 #define MAX_PATH 8192
 #endif //MAX_PATH.
+
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"TEST: 3.");
 
 		u_char buffer[MAX_PATH * 10];
 		char file_path[MAX_PATH * 2];
@@ -866,6 +864,9 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
 		if (target->dynamic_targets)
 		{
+			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+				"TEST: 4.");
+
 			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
 				"TARGET: DESTROY");
 			ngx_array_destroy(target->dynamic_targets);
