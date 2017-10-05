@@ -780,9 +780,6 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     for (n = 0; n < racf->pushes.nelts; ++n, ++t) {
         target = *t;
 
-	ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-		"TEST: 1.");
-
         if (target->name.len && (name.len != target->name.len ||
             ngx_memcmp(name.data, target->name.data, name.len)))
         {
@@ -791,9 +788,6 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
             continue;
         }
 
-
-	ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-		"TEST: 2.");
 
 	if (!DYNAMIC_PUSH)
 	{
@@ -856,19 +850,20 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 #endif //MAX_PATH.
 
 		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-			"TEST: 3.");
+			"TEST: 1.");
 
 		u_char buffer[MAX_PATH * 10];
 		char file_path[MAX_PATH * 2];
 		ngx_str_t url_s;
 
+		ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+			"TEST: 2.");
+
 		if (target->dynamic_targets)
 		{
 			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-				"TEST: 4.");
-
-			ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
 				"TARGET: DESTROY");
+
 			ngx_array_destroy(target->dynamic_targets);
 			target->dynamic_targets = 0;
 		}
